@@ -53,24 +53,38 @@ main :: () {
         print("listen failed with error: %", WSAGetLastError());
         return;
     }
-    
+
     while true {
         client_socket := INVALID_SOCKET;
         client_socket = accept(listen_socket, null, null);
         if client_socket == INVALID_SOCKET {
             print("accept failed \n");
             return;
-        } 
-        
+        }
+
         recvbuf : [DEFAULT_BUFLEN]u8;
-        read := recv(client_socket, recvbuf.data, xx recvbuf.count, 0);
-        
-        if read > 0 {
-            str: string;
-            str.data = recvbuf.data;
-            str.count = read;
-            
-            print("\n str % \n", str);
+
+        while true {
+            read := recv(client_socket, recvbuf.data, xx recvbuf.count, 0);
+
+            if read > 0 {
+                str: string;
+                str.data = recvbuf.data;
+                str.count = read;
+
+                print("\n str % \n", str);
+                write := send(client_socket, str.data, xx str.count, 0);
+                if write == SOCKET_ERROR {
+                    print("send failed %\n", WSAGetLastError());
+                }
+                // free(str);
+            } else if read == 0 {
+                print("Connection closing.. \n");
+                break;
+            } else {
+                print("recv failed %\n", WSAGetLastError());
+                break;
+            }
         }
     }
 
